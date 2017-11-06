@@ -12,7 +12,8 @@ using System.Linq;
 
 namespace RESTClient {
   /// <summary>
-  /// Wrapper work-around for json array described on https://forum.unity3d.com/threads/how-to-load-an-array-with-jsonutility.375735/
+  /// Wrapper work-around for json array
+  /// Issue reference: https://forum.unity3d.com/threads/how-to-load-an-array-with-jsonutility.375735/
   /// </summary>
 #pragma warning disable 0649 // suppresses warning: array "is never assigned to, and will always have its default value 'null'"
   [Serializable]
@@ -52,7 +53,7 @@ namespace RESTClient {
       if (JsonObject.TryParse(json, out jsonObject)) {
         JsonArray jsonArray = jsonObject.GetNamedArray(namedArray);
         T[] array = GetArray<T>(jsonArray);
-        N nestedResults = new N(); //NestedResults<T> nestedResults = new NestedResults<T>(array);
+        N nestedResults = new N();
         nestedResults.SetArray(array);
 
         string namedCount = nestedResults.GetCountField();
@@ -65,7 +66,7 @@ namespace RESTClient {
         return default(N);
       }
 #endif
-      N results = JsonUtility.FromJson<N>(json); // NestedResults<T> nestedResults = JsonUtility.FromJson<NestedResults<T>(json);
+      N results = JsonUtility.FromJson<N>(json);
       return results;
     }
 
