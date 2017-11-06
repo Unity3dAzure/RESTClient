@@ -11,13 +11,13 @@ using System.Text;
 
 namespace RESTClient {
   public class RestRequest : IDisposable {
-    public RestRequest(UnityWebRequest request) {
-      this.Request = request;
-    }
-
     public UnityWebRequest Request { get; private set; }
 
     private QueryParams queryParams;
+
+    public RestRequest(UnityWebRequest request) {
+      this.Request = request;
+    }
 
     public RestRequest(string url, Method method) {
       Request = new UnityWebRequest(url, method.ToString());
@@ -26,6 +26,17 @@ namespace RESTClient {
 
     public void AddHeader(string key, string value) {
       Request.SetRequestHeader(key, value);
+    }
+
+    public void AddHeaders(Dictionary<string, string> headers) {
+      foreach (KeyValuePair<string, string> header in headers) {
+        AddHeader(header.Key, header.Value);
+      }
+    }
+
+    public void AddBody(string text, string contentType = "text/plain; charset=UTF-8") {
+      byte[] bytes = Encoding.UTF8.GetBytes(text);
+      this.AddBody(bytes, contentType);
     }
 
     public void AddBody(byte[] bytes, string contentType) {
@@ -64,7 +75,24 @@ namespace RESTClient {
       }
     }
 
-    #region Response and json object parsing
+    #region Response and object parsing
+
+    private RestResult GetRestResult(bool expectedBodyContent = true) {
+      HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), Request.responseCode.ToString());
+      RestResult result = new RestResult(statusCode);
+
+      if (result.IsError) {
+        result.ErrorMessage = "Response failed with status: " + statusCode.ToString();
+        return result;
+      }
+
+      if (expectedBodyContent && string.IsNullOrEmpty(Request.downloadHandler.text)) {
+        result.IsError = true;
+        result.ErrorMessage = "Response has empty body";
+        return result;
+      }
+      return result;
+    }
 
     private RestResult<T> GetRestResult<T>() {
       HttpStatusCode statusCode = (HttpStatusCode)Enum.Parse(typeof(HttpStatusCode), Request.responseCode.ToString());
@@ -83,6 +111,8 @@ namespace RESTClient {
 
       return result;
     }
+
+    #region JSON object parsing response
 
     /// <summary>
     /// Shared method to return response result whether an object or array of objects
@@ -173,6 +203,57 @@ namespace RESTClient {
       }
       this.Dispose();
     }
+
+    #endregion
+
+    #region XML object parsing response
+
+    private RestResult<T> TrySerializeXml<T>() where T : class {
+      RestResult<T> result = GetRestResult<T>();
+      // return early if there was a status / data error other than Forbidden
+      if (result.IsError && result.StatusCode == HttpStatusCode.Forbidden) {
+        Debug.LogWarning("Authentication Failed: " + Request.downloadHandler.text);
+        return result;
+      } else if (result.IsError) {
+        return result;
+      }
+      // otherwise try and serialize XML response text to an object
+      try {
+        result.AnObject = XmlHelper.FromXml<T>(Request.downloadHandler.text);
+      } catch (Exception e) {
+        result.IsError = true;
+        result.ErrorMessage = "Failed to parse object of type: " + typeof(T).ToString() + " Exception message: " + e.Message;
+      }
+      return result;
+    }
+
+    public void ParseXML<T>(Action<IRestResponse<T>> callback = null) where T : class {
+      RestResult<T> result = TrySerializeXml<T>();
+
+      if (result.IsError) {
+        Debug.LogWarning("Response error status:" + result.StatusCode + " code:" + Request.responseCode + " error:" + result.ErrorMessage + " request url:" + Request.url);
+        callback(new RestResponse<T>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text));
+      } else {
+        callback(new RestResponse<T>(result.StatusCode, Request.url, Request.downloadHandler.text, result.AnObject));
+      }
+      this.Dispose();
+    }
+
+    /// <summary>
+    /// To be used with a callback which passes the response with result including status success or error code, request url and any body text.
+    /// </summary>
+    /// <param name="callback">Callback.</param>
+    public void Result(Action<RestResponse> callback = null) {
+      RestResult result = GetRestResult(false);
+      if (result.IsError) {
+        Debug.LogWarning("Response error status:" + result.StatusCode + " code:" + Request.responseCode + " error:" + result.ErrorMessage + " request url:" + Request.url);
+        callback(new RestResponse(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text));
+      } else {
+        callback(new RestResponse(result.StatusCode, Request.url, Request.downloadHandler.text));
+      }
+    }
+
+    #endregion
 
     /// Just return as plain text
     public IRestResponse<T> GetText<T>(Action<IRestResponse<T>> callback = null) {

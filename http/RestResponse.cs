@@ -76,5 +76,10 @@ namespace RESTClient {
     }
   }
 
+  internal sealed class RestResult : Response {
+    public RestResult(HttpStatusCode statusCode) : base(statusCode) {
+    }
+  }
+
 }
 

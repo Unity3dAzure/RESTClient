@@ -9,6 +9,7 @@ namespace RESTClient {
     GET,
     POST,
     PATCH,
-    DELETE
+    DELETE,
+    PUT
   }
 }
