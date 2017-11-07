@@ -11,8 +11,8 @@ For Unity developers looking to use REST Services in their Unity game / app.
 
 ## How do I use this with cloud services?
 Checkout the following projects for Unity which were built using this REST Client library as  examples.
- - [Azure App Services](https://github.com/Unity3dAzure/AppServicesDemo)
- - [Azure Blob Storage](https://github.com/Unity3dAzure/StorageServicesDemo)
+ - [Azure App Services](https://github.com/Unity3dAzure/AppServices)
+ - [Azure Blob Storage](https://github.com/Unity3dAzure/StorageServices)
  - [Azure Functions](https://github.com/Unity3dAzure/AzureFunctions)
  - [Nether (serverless)](https://github.com/MicrosoftDX/nether/tree/serverless/src/Client/Unity)
 
@@ -28,10 +28,10 @@ using System;
 ```
 
 ```
-public class RESTDemo : MonoBehaviour {
+public class RESTClientExample : MonoBehaviour {
 
 	void Start () {
-		StartCoroutine( SayHello(GetCompleted) );
+		StartCoroutine( SayHello(SayHelloCompleted) );
 	}
 
 	private IEnumerator SayHello(Action<IRestResponse<string>> callback = null) {
