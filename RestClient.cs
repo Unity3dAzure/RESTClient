@@ -21,7 +21,7 @@ namespace RESTClient {
     /// <summary>
     /// Creates a new REST Client
     /// </summary>
-    public RestClient(string url, bool forceHttps = true) {
+    public RestClient(string url, bool forceHttps = false) {
       if (forceHttps) {
         Url = HttpsUri(url);
       }
@@ -52,7 +52,7 @@ namespace RESTClient {
 
 #if !NETFX_CORE || UNITY_ANDROID
     private bool RemoteCertificateValidationCallback(System.Object sender, X509Certificate certificate, X509Chain chain, SslPolicyErrors sslPolicyErrors) {
-      // Check the certificate to see if it was issued from Azure
+      // Check the certificate to see if it was issued from host
       if (certificate.Subject.Contains(DomainName(Url))) {
         return true;
       } else {

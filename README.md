@@ -19,6 +19,41 @@ Checkout the following projects for Unity which were built using this REST Clien
 ## Requirements
 Requires Unity v5.3 or greater as [UnityWebRequest](https://docs.unity3d.com/Manual/UnityWebRequest.html) and [JsonUtility](https://docs.unity3d.com/ScriptReference/JsonUtility.html) features are used. Unity will be extending platform support for UnityWebRequest so keep Unity up to date if you need to support these additional platforms.
 
+## Example Usage
+This snippet shows how to send a **POST** request to a new [Azure Function](https://azure.microsoft.com/en-gb/services/functions/) HTTP Trigger "hello" sample function:
+
+```
+using RESTClient;
+using System;
+```
+
+```
+public class RESTDemo : MonoBehaviour {
+
+	void Start () {
+		StartCoroutine( SayHello(GetCompleted) );
+	}
+
+	private IEnumerator SayHello(Action<IRestResponse<string>> callback = null) {
+		RestRequest request = new RestRequest("https://***.azurewebsites.net/api/hello", Method.POST);
+		request.AddHeader("Content-Type", "application/json");
+		request.AddQueryParam("code", "***");
+		request.AddBody("{\"name\": \"unity\"}");
+		yield return request.Request.Send();
+		request.GetText(callback);
+	}
+
+	private void SayHelloCompleted(IRestResponse<string> response) {
+		if (response.IsError) {
+			Debug.LogError("Request error: " + response.StatusCode);
+			return;
+		}
+		Debug.Log("Completed: " + response.Content);
+	}
+
+}
+```
+
 ## Supported platforms
 Intended to work on all the platforms [UnityWebRequest](https://docs.unity3d.com/Manual/UnityWebRequest.html) supports including:
 * Unity Editor (Mac/PC) and Standalone players
