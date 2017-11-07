@@ -16,11 +16,8 @@ Checkout the following projects for Unity which were built using this REST Clien
  - [Azure Functions](https://github.com/Unity3dAzure/AzureFunctions)
  - [Nether (serverless)](https://github.com/MicrosoftDX/nether/tree/serverless/src/Client/Unity)
 
-## Requirements
-Requires Unity v5.3 or greater as [UnityWebRequest](https://docs.unity3d.com/Manual/UnityWebRequest.html) and [JsonUtility](https://docs.unity3d.com/ScriptReference/JsonUtility.html) features are used. Unity will be extending platform support for UnityWebRequest so keep Unity up to date if you need to support these additional platforms.
-
 ## Example Usage
-This snippet shows how to send a **POST** request to a new [Azure Function](https://azure.microsoft.com/en-gb/services/functions/) HTTP Trigger "hello" sample function:
+This snippet shows how to **POST** a REST request to a new [Azure Function](https://azure.microsoft.com/en-gb/services/functions/) HTTP Trigger "hello" sample function:
 
 ```
 using RESTClient;
@@ -30,14 +27,17 @@ using System;
 ```
 public class RESTClientExample : MonoBehaviour {
 
+  private string url = "https://***.azurewebsites.net/api/hello"; // Azure Function API endpoint
+  private string code = "***"; // Azure Function code
+
 	void Start () {
 		StartCoroutine( SayHello(SayHelloCompleted) );
 	}
 
 	private IEnumerator SayHello(Action<IRestResponse<string>> callback = null) {
-		RestRequest request = new RestRequest("https://***.azurewebsites.net/api/hello", Method.POST);
+		RestRequest request = new RestRequest(url, Method.POST);
 		request.AddHeader("Content-Type", "application/json");
-		request.AddQueryParam("code", "***");
+		request.AddQueryParam("code", code);
 		request.AddBody("{\"name\": \"unity\"}");
 		yield return request.Request.Send();
 		request.GetText(callback);
@@ -53,6 +53,9 @@ public class RESTClientExample : MonoBehaviour {
 
 }
 ```
+
+## Requirements
+Requires Unity v5.3 or greater as [UnityWebRequest](https://docs.unity3d.com/Manual/UnityWebRequest.html) and [JsonUtility](https://docs.unity3d.com/ScriptReference/JsonUtility.html) features are used. Unity will be extending platform support for UnityWebRequest so keep Unity up to date if you need to support these additional platforms.
 
 ## Supported platforms
 Intended to work on all the platforms [UnityWebRequest](https://docs.unity3d.com/Manual/UnityWebRequest.html) supports including:
