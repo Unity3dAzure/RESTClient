@@ -68,6 +68,13 @@ namespace RESTClient {
       }
     }
 
+    public void SetQueryParams(QueryParams queryParams) {
+      if (this.queryParams != null) {
+        Debug.LogWarning("Replacing previous query params");
+      }
+      this.queryParams = queryParams;
+    }
+
     public virtual void UpdateRequestUrl() {
       if (queryParams == null) {
         return;
