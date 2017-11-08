@@ -49,6 +49,10 @@ namespace RESTClient {
     }
 
     public virtual void AddBody<T>(T data, string contentType = "application/json; charset=utf-8") {
+      if (typeof(T) == typeof(string)) {
+        this.AddBody(data.ToString(), contentType);
+        return;
+      }
       string jsonString = JsonUtility.ToJson(data);
       byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
       this.AddBody(bytes, contentType);
