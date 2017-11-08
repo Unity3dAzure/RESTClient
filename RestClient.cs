@@ -22,9 +22,7 @@ namespace RESTClient {
     /// Creates a new REST Client
     /// </summary>
     public RestClient(string url, bool forceHttps = false) {
-      if (forceHttps) {
-        Url = HttpsUri(url);
-      }
+      Url = forceHttps ? HttpsUri(url) : url;
       // required for running in Windows and Android
 #if !NETFX_CORE || UNITY_ANDROID
       ServicePointManager.ServerCertificateValidationCallback = RemoteCertificateValidationCallback;
