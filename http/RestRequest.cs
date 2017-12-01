@@ -123,6 +123,8 @@ namespace RESTClient {
       return result;
     }
 
+    #endregion
+
     #region JSON object parsing response
 
     /// <summary>
@@ -203,23 +205,27 @@ namespace RESTClient {
     }
 
     /// Work-around for nested array
-    public void ParseJsonNestedArray<T, N>(string namedArray, Action<IRestResponse<N>> callback = null) where N : INestedResults<T>, new() {
+    public RestResponse<N> ParseJsonNestedArray<T, N>(string namedArray, Action<IRestResponse<N>> callback = null) where N : INestedResults<T>, new() {
       RestResult<N> result = TryParseJsonNestedArray<T, N>(namedArray);
-
+      RestResponse<N> response;
       if (result.IsError) {
         Debug.LogWarning("Response error status:" + result.StatusCode + " code:" + Request.responseCode + " error:" + result.ErrorMessage + " request url:" + Request.url);
-        callback(new RestResponse<N>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text));
+        response = new RestResponse<N>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
       } else {
-        callback(new RestResponse<N>(result.StatusCode, Request.url, Request.downloadHandler.text, result.AnObject));
+        response = new RestResponse<N>(result.StatusCode, Request.url, Request.downloadHandler.text, result.AnObject);
+      }
+      if (callback != null) {
+        callback(response);
       }
       this.Dispose();
+      return response;
     }
 
     #endregion
 
     #region XML object parsing response
 
-    private RestResult<T> TrySerializeXml<T>() where T : class {
+    private RestResult<T> TrySerializeXml<T>() {
       RestResult<T> result = GetRestResult<T>();
       // return early if there was a status / data error other than Forbidden
       if (result.IsError && result.StatusCode == HttpStatusCode.Forbidden) {
@@ -238,35 +244,52 @@ namespace RESTClient {
       return result;
     }
 
-    public void ParseXML<T>(Action<IRestResponse<T>> callback = null) where T : class {
+    public RestResponse<T> ParseXML<T>(Action<IRestResponse<T>> callback = null) {
       RestResult<T> result = TrySerializeXml<T>();
-
+      RestResponse<T> response;
       if (result.IsError) {
         Debug.LogWarning("Response error status:" + result.StatusCode + " code:" + Request.responseCode + " error:" + result.ErrorMessage + " request url:" + Request.url);
-        callback(new RestResponse<T>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text));
+        response = new RestResponse<T>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
       } else {
-        callback(new RestResponse<T>(result.StatusCode, Request.url, Request.downloadHandler.text, result.AnObject));
+        response = new RestResponse<T>(result.StatusCode, Request.url, Request.downloadHandler.text, result.AnObject);
+      }
+      if (callback != null) {
+        callback(response);
       }
       this.Dispose();
+      return response;
     }
 
     /// <summary>
     /// To be used with a callback which passes the response with result including status success or error code, request url and any body text.
     /// </summary>
     /// <param name="callback">Callback.</param>
-    public void Result(Action<RestResponse> callback = null) {
-      RestResult result = GetRestResult(false);
+    public RestResponse Result(Action<RestResponse> callback = null) {
+      return GetText(callback, false);
+    }
+
+    public RestResponse GetText(Action<RestResponse> callback = null, bool expectedBodyContent = true) {
+      RestResult result = GetRestResult(expectedBodyContent);
+      RestResponse response;
       if (result.IsError) {
         Debug.LogWarning("Response error status:" + result.StatusCode + " code:" + Request.responseCode + " error:" + result.ErrorMessage + " request url:" + Request.url);
-        callback(new RestResponse(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text));
+        response = new RestResponse(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
       } else {
-        callback(new RestResponse(result.StatusCode, Request.url, Request.downloadHandler.text));
+        response = new RestResponse(result.StatusCode, Request.url, Request.downloadHandler.text);
       }
+      if (callback != null) {
+        callback(response);
+      }
+      this.Dispose();
+      return response;
     }
 
     #endregion
 
-    /// Just return as plain text
+    /// <summary>
+    /// Return response body as plain text.
+    /// </summary>
+    /// <param name="callback">Callback with response type: IRestResponse<string></param>
     public IRestResponse<T> GetText<T>(Action<IRestResponse<T>> callback = null) {
       RestResult<string> result = GetRestResult<string>();
       RestResponse<T> response;
@@ -282,11 +305,84 @@ namespace RESTClient {
       return response;
     }
 
-    public void Dispose() {
-      Request.Dispose(); // Request completed, clean-up resources
+    /// <summary>
+    /// Return response body as bytes.
+    /// </summary>
+    /// <param name="callback">Callback with response type: IRestResponse<byte[]></param>
+    public IRestResponse<byte[]> GetBytes(Action<IRestResponse<byte[]>> callback = null) {
+      RestResult result = GetRestResult(false);
+      RestResponse<byte[]> response;
+      if (result.IsError) {
+        response = new RestResponse<byte[]>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
+      } else {
+        response = new RestResponse<byte[]>(result.StatusCode, Request.url, null, Request.downloadHandler.data);
+      }
+      if (callback != null) {
+        callback(response);
+      }
+      this.Dispose();
+      return response;
+    }
+
+    #region Handle native asset UnityWebRequest.Get... requests
+
+    public IRestResponse<Texture> GetTexture(Action<IRestResponse<Texture>> callback = null) {
+      RestResult result = GetRestResult(false);
+      RestResponse<Texture> response;
+      if (result.IsError) {
+        response = new RestResponse<Texture>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
+      } else {
+        Texture texture = ((DownloadHandlerTexture)Request.downloadHandler).texture;
+        response = new RestResponse<Texture>(result.StatusCode, Request.url, null, texture);
+      }
+      if (callback != null) {
+        callback(response);
+      }
+      this.Dispose();
+      return response;
+    }
+
+    public IRestResponse<AudioClip> GetAudioClip(Action<IRestResponse<AudioClip>> callback = null) {
+      RestResult result = GetRestResult(false);
+      RestResponse<AudioClip> response;
+      if (result.IsError) {
+        response = new RestResponse<AudioClip>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
+      } else {
+        AudioClip audioClip = ((DownloadHandlerAudioClip)Request.downloadHandler).audioClip;
+        response = new RestResponse<AudioClip>(result.StatusCode, Request.url, null, audioClip);
+      }
+      if (callback != null) {
+        callback(response);
+      }
+      this.Dispose();
+      return response;
+    }
+
+    public IRestResponse<AssetBundle> GetAssetBundle(Action<IRestResponse<AssetBundle>> callback = null) {
+      RestResult result = GetRestResult(false);
+      RestResponse<AssetBundle> response;
+      if (result.IsError) {
+        response = new RestResponse<AssetBundle>(result.ErrorMessage, result.StatusCode, Request.url, Request.downloadHandler.text);
+      } else {
+        AssetBundle assetBundle = ((DownloadHandlerAssetBundle)Request.downloadHandler).assetBundle;
+        response = new RestResponse<AssetBundle>(result.StatusCode, Request.url, null, assetBundle);
+      }
+      if (callback != null) {
+        callback(response);
+      }
+      this.Dispose();
+      return response;
     }
 
     #endregion
+
+    public UnityWebRequestAsyncOperation Send() {
+      return Request.SendWebRequest(); // Send() is obsolete UNITY_2017_2_OR_NEWER
+    }
+
+    public void Dispose() {
+      Request.Dispose(); // Request completed, clean-up resources
+    }
 
   }
 }

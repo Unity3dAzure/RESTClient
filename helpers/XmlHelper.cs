@@ -27,7 +27,7 @@ namespace RESTClient {
       return File.ReadAllText(path);
     }
 
-    public static T FromXml<T>(string xml) where T : class {
+    public static T FromXml<T>(string xml) {
       XmlSerializer serializer = new XmlSerializer(typeof(T));
       using (var stream = new MemoryStream(Encoding.UTF8.GetBytes(xml))) {
         return (T)serializer.Deserialize(stream);
