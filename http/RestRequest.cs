@@ -36,14 +36,15 @@ namespace RESTClient {
 
     public void AddBody(string text, string contentType = "text/plain; charset=UTF-8") {
       byte[] bytes = Encoding.UTF8.GetBytes(text);
-      this.AddBody(bytes, contentType);
+      this.AddBody(bytes, contentType, false);
     }
 
-    public void AddBody(byte[] bytes, string contentType) {
+    public void AddBody(byte[] bytes, string contentType, bool isChunked = false) {
       if (Request.uploadHandler != null) {
         Debug.LogWarning("Request body can only be set once");
         return;
       }
+      Request.isChunked = isChunked;
       Request.uploadHandler = new UploadHandlerRaw(bytes);
       Request.uploadHandler.contentType = contentType;
     }
@@ -55,7 +56,7 @@ namespace RESTClient {
       }
       string jsonString = JsonUtility.ToJson(data);
       byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
-      this.AddBody(bytes, contentType);
+      this.AddBody(bytes, contentType, false);
     }
 
     public virtual void AddQueryParam(string key, string value, bool shouldUpdateRequestUrl = false) {
@@ -377,7 +378,11 @@ namespace RESTClient {
     #endregion
 
     public UnityWebRequestAsyncOperation Send() {
-      return Request.SendWebRequest(); // Send() is obsolete UNITY_2017_2_OR_NEWER
+#if UNITY_2017_2_OR_NEWER
+      return Request.SendWebRequest();
+#else
+      return Request.Send();
+#endif
     }
 
     public void Dispose() {
