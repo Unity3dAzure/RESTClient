@@ -44,7 +44,7 @@ namespace RESTClient {
         Debug.LogWarning("Request body can only be set once");
         return;
       }
-      Request.isChunked = isChunked;
+      Request.chunkedTransfer = isChunked;
       Request.uploadHandler = new UploadHandlerRaw(bytes);
       Request.uploadHandler.contentType = contentType;
     }
