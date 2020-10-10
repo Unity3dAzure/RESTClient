@@ -7,6 +7,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using UnityEngine;
+using UnityEngine.Networking;
 
 namespace RESTClient {
   public class QueryParams {
@@ -26,8 +27,8 @@ namespace RESTClient {
       }
       StringBuilder sb = new StringBuilder("?");
       foreach (KeyValuePair<string, string> param in parameters) {
-        string key = WWW.EscapeURL(param.Key);
-        string value = WWW.EscapeURL(param.Value);
+        string key = UnityWebRequest.EscapeURL(param.Key);
+        string value = UnityWebRequest.EscapeURL(param.Value);
         sb.Append(key + "=" + value + "&");
       }
       sb.Remove(sb.Length - 1, 1);
