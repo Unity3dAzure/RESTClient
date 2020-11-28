@@ -43,12 +43,11 @@ namespace RESTClient {
       this.AddBody(bytes, contentType, false);
     }
 
-    public void AddBody(byte[] bytes, string contentType, bool isChunked) {
+    public void AddBody(byte[] bytes, string contentType) {
       if (Request.uploadHandler != null) {
         Debug.LogWarning("Request body can only be set once");
         return;
       }
-      Request.chunkedTransfer = isChunked;
       Request.uploadHandler = new UploadHandlerRaw(bytes);
       Request.uploadHandler.contentType = contentType;
     }
