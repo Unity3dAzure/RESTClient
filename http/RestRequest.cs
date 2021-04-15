@@ -36,19 +36,14 @@ namespace RESTClient {
 
     public void AddBody(string text, string contentType = "text/plain; charset=UTF-8") {
       byte[] bytes = Encoding.UTF8.GetBytes(text);
-      this.AddBody(bytes, contentType, false);
+      this.AddBody(bytes, contentType);
     }
 
     public void AddBody(byte[] bytes, string contentType) {
-      this.AddBody(bytes, contentType, false);
-    }
-
-    public void AddBody(byte[] bytes, string contentType, bool isChunked) {
       if (Request.uploadHandler != null) {
         Debug.LogWarning("Request body can only be set once");
         return;
       }
-      Request.chunkedTransfer = isChunked;
       Request.uploadHandler = new UploadHandlerRaw(bytes);
       Request.uploadHandler.contentType = contentType;
     }
@@ -60,7 +55,7 @@ namespace RESTClient {
       }
       string jsonString = JsonUtility.ToJson(data);
       byte[] bytes = Encoding.UTF8.GetBytes(jsonString);
-      this.AddBody(bytes, contentType, false);
+      this.AddBody(bytes, contentType);
     }
 
     public virtual void AddQueryParam(string key, string value, bool shouldUpdateRequestUrl = false) {
